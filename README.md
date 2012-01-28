@@ -13,8 +13,8 @@ tasks from signal handlers without fear!
   that sending tasks from Django's shell will work as expected, as will the
   transaction decorators `commit_on_success`, `commit_manually`, etc.
 
-**Note:** As middleware is used to implement this functionality, it will only
-work from within the request/response cycle.
+**Note:** As request signals are used to implement this functionality, it will
+only work from within the request/response cycle.
 
 ## Installation/Use
 
@@ -22,17 +22,7 @@ work from within the request/response cycle.
 
         $ pip install django-celery-transactions
 
-2. Add `PostCommitTaskMiddleware` to `MIDDLEWARE_CLASSES` in `settings.py`
-   (it must appear before Django's transaction middleware):
-
-        MIDDLEWARE_CLASSES = (
-            # ...
-            "djcelery_transactions.PostCommitTaskMiddleware",
-            "django.middleware.transaction.TransactionMiddleware",
-            # ...
-        )
-
-3. Use the patched decorator to create your tasks:
+2. Use the patched decorator to create your tasks:
 
         from djcelery_transaction import task
 
