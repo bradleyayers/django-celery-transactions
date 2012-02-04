@@ -6,9 +6,16 @@ from functools import partial
 import threading
 
 
-# Used to store delayed tasks.
+# Thread-local data (task queue).
 _thread_data = threading.local()
-_thread_data.task_queue = []
+
+
+def _get_task_queue():
+    """Returns the calling thread's task queue."""
+    if not hasattr(_thread_data, "task_queue"):
+        _thread_data.task_queue = []
+
+    return _thread_data.task_queue
 
 
 class PostTransactionTask(Task):
@@ -43,7 +50,7 @@ class PostTransactionTask(Task):
         delay_task = after_transaction and transaction.is_managed()
 
         if delay_task:
-            _thread_data.task_queue.append((cls, args, kwargs))
+            _get_task_queue().append((cls, args, kwargs))
         else:
             return super(PostTransactionTask, cls).apply_async(*args, **kwargs)
 
@@ -52,7 +59,7 @@ def _discard_tasks(**kwargs):
     """Discards all delayed Celery tasks.
 
     Called after a transaction is rolled back."""
-    _thread_data.task_queue = []
+    _get_task_queue()[:] = []
 
 
 def _send_tasks(**kwargs):
@@ -61,8 +68,8 @@ def _send_tasks(**kwargs):
     Called after a transaction is committed or we leave a transaction
     management block in which no changes were made (effectively a commit).
     """
-    while len(_thread_data.task_queue) > 0:
-        cls, args, kwargs = _thread_data.task_queue.pop()
+    while len(_get_task_queue()) > 0:
+        cls, args, kwargs = _get_task_queue().pop()
         cls.apply_async(*args, after_transaction=False, **kwargs)
 
 
