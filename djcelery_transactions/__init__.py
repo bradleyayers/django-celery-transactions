@@ -70,7 +70,8 @@ def _send_tasks(**kwargs):
     """
     while len(_get_task_queue()) > 0:
         cls, args, kwargs = _get_task_queue().pop()
-        cls.apply_async(*args, after_transaction=False, **kwargs)
+        kwargs['after_transaction'] = False
+        cls.apply_async(*args, **kwargs)
 
 
 # A replacement decorator.
