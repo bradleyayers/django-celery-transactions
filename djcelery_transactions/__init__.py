@@ -1,5 +1,6 @@
 # coding=utf-8
 from celery.task import task as base_task, Task
+from celery import current_app
 import djcelery_transactions.transaction_signals
 from django.db import transaction
 from functools import partial
@@ -52,7 +53,10 @@ class PostTransactionTask(Task):
         if delay_task:
             _get_task_queue().append((cls, args, kwargs))
         else:
-            return super(PostTransactionTask, cls).apply_async(*args, **kwargs)
+            apply_async_orig = super(PostTransactionTask, cls).apply_async
+            if current_app.conf.CELERY_ALWAYS_EAGER:
+                apply_async_orig =  transaction.autocommit()(apply_async_orig)
+            return apply_async_orig(*args, **kwargs)
 
 
 def _discard_tasks(**kwargs):
