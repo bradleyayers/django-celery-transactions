@@ -12,10 +12,7 @@ _thread_data = threading.local()
 
 def _get_task_queue():
     """Returns the calling thread's task queue."""
-    if not hasattr(_thread_data, "task_queue"):
-        _thread_data.task_queue = []
-
-    return _thread_data.task_queue
+    return _thread_data.__dict__.setdefault("task_queue", [])
 
 
 class PostTransactionTask(Task):
