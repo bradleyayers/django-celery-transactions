@@ -27,9 +27,10 @@ functionality, which can be found on GitHub: https://gist.github.com/247844
 
     This module must be imported before you attempt to use the signals.
 """
+from functools import partial
+
 from django.db import transaction
 from django.dispatch import Signal
-from functools import partial
 
 
 class TransactionSignals(object):
