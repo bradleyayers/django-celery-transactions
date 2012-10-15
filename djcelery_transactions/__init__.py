@@ -68,8 +68,9 @@ def _send_tasks(**kwargs):
     Called after a transaction is committed or we leave a transaction
     management block in which no changes were made (effectively a commit).
     """
-    while len(_get_task_queue()) > 0:
-        cls, args, kwargs = _get_task_queue().pop()
+    queue = _get_task_queue()
+    while queue:
+        cls, args, kwargs = queue.pop(0)
         kwargs['after_transaction'] = False
         cls.apply_async(*args, **kwargs)
 
