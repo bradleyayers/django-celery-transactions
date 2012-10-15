@@ -28,8 +28,14 @@ functionality, which can be found on GitHub: https://gist.github.com/247844
     This module must be imported before you attempt to use the signals.
 """
 from functools import partial
+import thread
 
 from django.db import transaction
+try:
+    # Prior versions of Django 1.3
+    from django.db.transaction import state
+except ImportError:
+    state = None
 from django.dispatch import Signal
 
 
@@ -75,7 +81,14 @@ def managed(old_function, *args, **kwargs):
     # Turning transaction management off causes the current transaction to be
     # committed if it's dirty. We must send the signal after the actual commit.
     flag = kwargs.get('flag', args[0])
-    commit = not flag and transaction.is_dirty()
+    if state is not None:
+        using = kwargs.get('using', args[1] if len(args) > 1 else None)
+        # Do not commit too early for prior versions of Django 1.3
+        thread_ident = thread.get_ident()
+        top = state.get(thread_ident, {}).get(using, None)
+        commit = top and not flag and transaction.is_dirty()
+    else:
+        commit = not flag and transaction.is_dirty()
     old_function(*args, **kwargs)
 
     if commit:
