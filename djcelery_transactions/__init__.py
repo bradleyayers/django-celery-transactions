@@ -40,16 +40,20 @@ class PostTransactionTask(Task):
     abstract = True
 
     @classmethod
+    def original_apply_async(cls, *args, **kwargs):
+        """Shortcut method to reach real implementation
+        of celery.Task.apply_sync
+        """
+        return super(PostTransactionTask, cls).apply_async(*args, **kwargs)
+
+    @classmethod
     def apply_async(cls, *args, **kwargs):
         # Delay the task unless the client requested otherwise or transactions
         # aren't being managed (i.e. the signal handlers won't send the task).
-        after_transaction = kwargs.pop("after_transaction", True)
-        delay_task = after_transaction and transaction.is_managed()
-
-        if delay_task:
+        if transaction.is_managed():
             _get_task_queue().append((cls, args, kwargs))
         else:
-            return super(PostTransactionTask, cls).apply_async(*args, **kwargs)
+            return cls.original_apply_async(*args, **kwargs)
 
 
 def _discard_tasks(**kwargs):
@@ -68,8 +72,7 @@ def _send_tasks(**kwargs):
     queue = _get_task_queue()
     while queue:
         cls, args, kwargs = queue.pop(0)
-        kwargs['after_transaction'] = False
-        cls.apply_async(*args, **kwargs)
+        cls.original_apply_async(*args, **kwargs)
 
 
 # A replacement decorator.
