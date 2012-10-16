@@ -56,4 +56,8 @@ Celery's [user guide][1]. Send tasks from signal handlers without fear!
             print_model.delay(model_pk)
             transaction.commit()
 
+## Run test suite
+
+        $ python setup.py test
+
 [1]: http://celery.readthedocs.org/en/latest/userguide/tasks.html#database-transactions
