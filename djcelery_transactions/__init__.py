@@ -51,6 +51,13 @@ class PostTransactionTask(Task):
         # Delay the task unless the client requested otherwise or transactions
         # aren't being managed (i.e. the signal handlers won't send the task).
         if transaction.is_managed():
+            if not transaction.is_dirty():
+                # Always mark the transaction as dirty
+                # because we push task in queue that must be fired or discarded
+                if 'using' in kwargs:
+                    transaction.set_dirty(using=kwargs['using'])
+                else:
+                    transaction.set_dirty()
             _get_task_queue().append((cls, args, kwargs))
         else:
             return cls.original_apply_async(*args, **kwargs)
