@@ -45,48 +45,49 @@ class TransactionSignals(object):
 transaction.signals = TransactionSignals()
 
 
-def commit(old_function, using=None):
+def commit(old_function, *args, **kwargs):
     # This will raise an exception if the commit fails. django.db.transaction
     # decorators catch this and call rollback(), but the middleware doesn't.
-    old_function(using)
+    old_function(*args, **kwargs)
     transaction.signals.post_commit.send(None)
 
 
-def commit_unless_managed(old_function, using=None):
-    old_function(using)
+def commit_unless_managed(old_function, *args, **kwargs):
+    old_function(*args, **kwargs)
     if not transaction.is_managed():
         transaction.signals.post_commit.send(None)
 
 
 # commit() isn't called at the end of a transaction management block if there
 # were no changes. This function is always called so the signal is always sent.
-def leave_transaction_management(old_function, using=None):
+def leave_transaction_management(old_function, *args, **kwargs):
     # If the transaction is dirty, it is rolled back and an exception is
     # raised. We need to send the rollback signal before that happens.
     if transaction.is_dirty():
         transaction.signals.post_rollback.send(None)
 
-    old_function(using)
+    old_function(*args, **kwargs)
     transaction.signals.post_transaction_management.send(None)
 
 
-def managed(old_function, flag=True, using=None):
+def managed(old_function, *args, **kwargs):
     # Turning transaction management off causes the current transaction to be
     # committed if it's dirty. We must send the signal after the actual commit.
+    flag = kwargs.get('flag', args[0])
     commit = not flag and transaction.is_dirty()
-    old_function(flag, using)
+    old_function(*args, **kwargs)
 
     if commit:
         transaction.signals.post_commit.send(None)
 
 
-def rollback(old_function, using=None):
-    old_function(using)
+def rollback(old_function, *args, **kwargs):
+    old_function(*args, **kwargs)
     transaction.signals.post_rollback.send(None)
 
 
-def rollback_unless_managed(old_function, using=None):
-    old_function(using)
+def rollback_unless_managed(old_function, *args, **kwargs):
+    old_function(*args, **kwargs)
     if not transaction.is_managed():
         transaction.signals.post_rollback.send(None)
 
