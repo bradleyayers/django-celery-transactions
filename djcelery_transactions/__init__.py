@@ -12,10 +12,7 @@ _thread_data = threading.local()
 
 def _get_task_queue():
     """Returns the calling thread's task queue."""
-    if not hasattr(_thread_data, "task_queue"):
-        _thread_data.task_queue = []
-
-    return _thread_data.task_queue
+    return _thread_data.__dict__.setdefault("task_queue", [])
 
 
 class PostTransactionTask(Task):
@@ -43,16 +40,27 @@ class PostTransactionTask(Task):
     abstract = True
 
     @classmethod
+    def original_apply_async(cls, *args, **kwargs):
+        """Shortcut method to reach real implementation
+        of celery.Task.apply_sync
+        """
+        return super(PostTransactionTask, cls).apply_async(*args, **kwargs)
+
+    @classmethod
     def apply_async(cls, *args, **kwargs):
         # Delay the task unless the client requested otherwise or transactions
         # aren't being managed (i.e. the signal handlers won't send the task).
-        after_transaction = kwargs.pop("after_transaction", True)
-        delay_task = after_transaction and transaction.is_managed()
-
-        if delay_task:
+        if transaction.is_managed():
+            if not transaction.is_dirty():
+                # Always mark the transaction as dirty
+                # because we push task in queue that must be fired or discarded
+                if 'using' in kwargs:
+                    transaction.set_dirty(using=kwargs['using'])
+                else:
+                    transaction.set_dirty()
             _get_task_queue().append((cls, args, kwargs))
         else:
-            return super(PostTransactionTask, cls).apply_async(*args, **kwargs)
+            return cls.original_apply_async(*args, **kwargs)
 
 
 def _discard_tasks(**kwargs):
@@ -68,10 +76,10 @@ def _send_tasks(**kwargs):
     Called after a transaction is committed or we leave a transaction
     management block in which no changes were made (effectively a commit).
     """
-    while len(_get_task_queue()) > 0:
-        cls, args, kwargs = _get_task_queue().pop()
-        kwargs['after_transaction'] = False
-        cls.apply_async(*args, **kwargs)
+    queue = _get_task_queue()
+    while queue:
+        cls, args, kwargs = queue.pop(0)
+        cls.original_apply_async(*args, **kwargs)
 
 
 # A replacement decorator.

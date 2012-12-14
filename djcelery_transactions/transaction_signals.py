@@ -27,9 +27,16 @@ functionality, which can be found on GitHub: https://gist.github.com/247844
 
     This module must be imported before you attempt to use the signals.
 """
-from django.db import transaction
-from django.dispatch import Signal
 from functools import partial
+import thread
+
+from django.db import transaction
+try:
+    # Prior versions of Django 1.3
+    from django.db.transaction import state
+except ImportError:
+    state = None
+from django.dispatch import Signal
 
 
 class TransactionSignals(object):
@@ -45,48 +52,56 @@ class TransactionSignals(object):
 transaction.signals = TransactionSignals()
 
 
-def commit(old_function, using=None):
+def commit(old_function, *args, **kwargs):
     # This will raise an exception if the commit fails. django.db.transaction
     # decorators catch this and call rollback(), but the middleware doesn't.
-    old_function(using)
+    old_function(*args, **kwargs)
     transaction.signals.post_commit.send(None)
 
 
-def commit_unless_managed(old_function, using=None):
-    old_function(using)
+def commit_unless_managed(old_function, *args, **kwargs):
+    old_function(*args, **kwargs)
     if not transaction.is_managed():
         transaction.signals.post_commit.send(None)
 
 
 # commit() isn't called at the end of a transaction management block if there
 # were no changes. This function is always called so the signal is always sent.
-def leave_transaction_management(old_function, using=None):
+def leave_transaction_management(old_function, *args, **kwargs):
     # If the transaction is dirty, it is rolled back and an exception is
     # raised. We need to send the rollback signal before that happens.
     if transaction.is_dirty():
         transaction.signals.post_rollback.send(None)
 
-    old_function(using)
+    old_function(*args, **kwargs)
     transaction.signals.post_transaction_management.send(None)
 
 
-def managed(old_function, flag=True, using=None):
+def managed(old_function, *args, **kwargs):
     # Turning transaction management off causes the current transaction to be
     # committed if it's dirty. We must send the signal after the actual commit.
-    commit = not flag and transaction.is_dirty()
-    old_function(flag, using)
+    flag = kwargs.get('flag', args[0])
+    if state is not None:
+        using = kwargs.get('using', args[1] if len(args) > 1 else None)
+        # Do not commit too early for prior versions of Django 1.3
+        thread_ident = thread.get_ident()
+        top = state.get(thread_ident, {}).get(using, None)
+        commit = top and not flag and transaction.is_dirty()
+    else:
+        commit = not flag and transaction.is_dirty()
+    old_function(*args, **kwargs)
 
     if commit:
         transaction.signals.post_commit.send(None)
 
 
-def rollback(old_function, using=None):
-    old_function(using)
+def rollback(old_function, *args, **kwargs):
+    old_function(*args, **kwargs)
     transaction.signals.post_rollback.send(None)
 
 
-def rollback_unless_managed(old_function, using=None):
-    old_function(using)
+def rollback_unless_managed(old_function, *args, **kwargs):
+    old_function(*args, **kwargs)
     if not transaction.is_managed():
         transaction.signals.post_rollback.send(None)
 
