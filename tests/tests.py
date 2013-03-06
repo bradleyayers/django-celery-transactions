@@ -47,3 +47,17 @@ class DjangoCeleryTestCase(TransactionTestCase):
             self.assertFalse(my_global)
         else:
             self.fail('Exception not raised')
+
+    def test_django_db_transaction_managed(self):
+        """
+        Check that django.db.transaction.managed is not affected
+        by monkey-patching
+        """
+        from django.db import transaction
+        self.assertFalse(transaction.is_managed())
+        transaction.enter_transaction_management()
+        try:
+            transaction.managed()
+            self.assertTrue(transaction.is_managed())
+        finally:
+            transaction.leave_transaction_management()
