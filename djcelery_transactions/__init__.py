@@ -1,10 +1,10 @@
 # coding=utf-8
 from celery.task import task as base_task, Task
+from celery import current_app
 import djcelery_transactions.transaction_signals
 from django.db import transaction
 from functools import partial
 import threading
-
 
 # Thread-local data (task queue).
 _thread_data = threading.local()
@@ -50,7 +50,7 @@ class PostTransactionTask(Task):
     def apply_async(cls, *args, **kwargs):
         # Delay the task unless the client requested otherwise or transactions
         # aren't being managed (i.e. the signal handlers won't send the task).
-        if transaction.is_managed():
+        if transaction.is_managed() and not getattr(current_app.conf, 'CELERY_ALWAYS_EAGER', False):
             if not transaction.is_dirty():
                 # Always mark the transaction as dirty
                 # because we push task in queue that must be fired or discarded
