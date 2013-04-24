@@ -80,7 +80,7 @@ def leave_transaction_management(old_function, *args, **kwargs):
 def managed(old_function, *args, **kwargs):
     # Turning transaction management off causes the current transaction to be
     # committed if it's dirty. We must send the signal after the actual commit.
-    flag = kwargs.get('flag', args[0])
+    flag = kwargs.get('flag', len(args) > 0 and args[0])
     if state is not None:
         using = kwargs.get('using', args[1] if len(args) > 1 else None)
         # Do not commit too early for prior versions of Django 1.3
