@@ -52,7 +52,15 @@ class PostTransactionTask(Task):
         # Delay the task unless the client requested otherwise or transactions
         # aren't being managed (i.e. the signal handlers won't send the task).
 
-        if transaction.is_managed():
+        # A rather roundabout way of allowing control of transaction behaviour from source. I'm sure there's a better way.
+        after_transaction = True
+        if len(args) > 1:
+            if isinstance(args[1], dict):
+                after_transaction = args[1].pop('after_transaction', True)
+        if 'after_transaction' in kwargs:
+            after_transaction = kwags.pop('after_transaction')
+
+        if transaction.is_managed() and after_transaction:
             if not transaction.is_dirty():
                 # Always mark the transaction as dirty
                 # because we push task in queue that must be fired or discarded
