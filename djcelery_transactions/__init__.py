@@ -25,8 +25,7 @@ class PostTransactionTask(Task):
 
     If transactions aren't being managed when ``apply_asyc()`` is called (if
     you're in the Django shell, for example) or the ``after_transaction``
-    keyword argument is ``False``, the task will be sent immediately.
-
+    keyword argument is ``False``, the task will
     A replacement decorator is provided:
 
     .. code-block:: python
@@ -58,7 +57,7 @@ class PostTransactionTask(Task):
             if isinstance(args[1], dict):
                 after_transaction = args[1].pop('after_transaction', True)
         if 'after_transaction' in kwargs:
-            after_transaction = kwags.pop('after_transaction')
+            after_transaction = kwargs.pop('after_transaction')
 
         if transaction.is_managed() and after_transaction:
             if not transaction.is_dirty():
