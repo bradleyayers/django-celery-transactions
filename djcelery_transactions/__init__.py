@@ -6,6 +6,8 @@ from django.db import transaction
 from functools import partial
 import threading
 
+from django.db.transaction import get_connection
+
 # Thread-local data (task queue).
 _thread_data = threading.local()
 
@@ -50,7 +52,8 @@ class PostTransactionTask(Task):
     def apply_async(cls, *args, **kwargs):
         # Delay the task unless the client requested otherwise or transactions
         # aren't being managed (i.e. the signal handlers won't send the task).
-        if not getattr(current_app.conf, 'CELERY_ALWAYS_EAGER', False):
+        connection = get_connection()
+        if connection.in_atomic_block and not getattr(current_app.conf, 'CELERY_ALWAYS_EAGER', False):
             _get_task_queue().append((cls, args, kwargs))
         else:
             return cls.original_apply_async(*args, **kwargs)

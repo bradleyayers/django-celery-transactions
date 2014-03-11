@@ -101,7 +101,7 @@ def __patched__exit__(self, exc_type, exc_value, trackback):
                 connection.autocommit = True
             else:
                 connection.set_autocommit(True)
-        # Outermost block exit when autocommit was disabled.
+            # Outermost block exit when autocommit was disabled.
         elif not connection.savepoint_ids and not connection.commit_on_exit:
             connection.in_atomic_block = False
 
