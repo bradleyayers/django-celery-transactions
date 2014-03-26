@@ -51,7 +51,7 @@ class PostTransactionTask(Task):
         # Delay the task unless the client requested otherwise or transactions
         # aren't being managed (i.e. the signal handlers won't send the task).
 
-        if transaction.is_managed():
+        if transaction.is_managed() and not current_app.conf.CELERY_ALWAYS_EAGER:
             if not transaction.is_dirty():
                 # Always mark the transaction as dirty
                 # because we push task in queue that must be fired or discarded
@@ -62,8 +62,6 @@ class PostTransactionTask(Task):
             _get_task_queue().append((cls, args, kwargs))
         else:
             apply_async_orig = super(PostTransactionTask, cls).apply_async
-            if current_app.conf.CELERY_ALWAYS_EAGER:
-                apply_async_orig =  transaction.autocommit()(apply_async_orig)
             return apply_async_orig(*args, **kwargs)
 
 
