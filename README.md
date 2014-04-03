@@ -16,48 +16,56 @@ Celery's [user guide][1]. Send tasks from signal handlers without fear!
 
 1. Install django-celery-transactions from PyPI:
 
-        $ pip install django-celery-transactions
+```sh
+$ pip install django-celery-transactions
+```
 
 2. Use the patched decorator to create your tasks:
 
-        from djcelery_transactions import task
-        from models import Model
+```python
+from djcelery_transactions import task
+from models import Model
 
 
-        @task
-        def print_model(model_pk):
-            print Model.objects.get(pk=model_pk)
+@task
+def print_model(model_pk):
+    print Model.objects.get(pk=model_pk)
+```
 
 3. Then use them as normal:
 
-        from django.db import transaction
-        from models import Model
-        from tasks import print_model
+```python
+from django.db import transaction
+from models import Model
+from tasks import print_model
 
 
-        # This task will be sent after the transaction is committed. This works
-        # from anywhere in the managed transaction block (e.g. signal handlers).
-        def view(request):
-            model = Model.objects.create(...)
-            print_model.delay(model.pk)
+# This task will be sent after the transaction is committed. This works
+# from anywhere in the managed transaction block (e.g. signal handlers).
+def view(request):
+    model = Model.objects.create(...)
+    print_model.delay(model.pk)
 
 
-        # This task will not be sent (it is discarded) as the transaction
-        # middleware rolls the transaction back when it catches the exception.
-        def failing_view(request, model_pk):
-            print_model.delay(model_pk)
-            raise Exception()
+# This task will not be sent (it is discarded) as the transaction
+# middleware rolls the transaction back when it catches the exception.
+def failing_view(request, model_pk):
+    print_model.delay(model_pk)
+    raise Exception()
 
 
-        # This task will be sent immediately as transactions aren't being
-        # managed and it is assumed that the author knows what they're doing.
-        @transaction.commit_manually
-        def manual_view(request, model_pk):
-            print_model.delay(model_pk)
-            transaction.commit()
+# This task will be sent immediately as transactions aren't being
+# managed and it is assumed that the author knows what they're doing.
+@transaction.commit_manually
+def manual_view(request, model_pk):
+    print_model.delay(model_pk)
+    transaction.commit()
+```
 
 ## Run test suite
 
-        $ python setup.py test
+```sh
+$ python setup.py test
+```
 
 [1]: http://celery.readthedocs.org/en/latest/userguide/tasks.html#database-transactions
