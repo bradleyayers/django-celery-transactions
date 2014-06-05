@@ -62,6 +62,20 @@ def manual_view(request, model_pk):
     transaction.commit()
 ```
 
+## Caveats
+
+Due to the task being sent after the current transaction has been commited, the
+`PostTransactionTask` provided in this package does not return an
+`celery.result.AsyncResult` as the original celery `Task` does.
+
+Thus, `print_model.delay(model_pk)` simply returns `None`. In order to track
+the task later on, the `task_id` can be predefined in the `apply_async` method:
+
+        from celery.utils import uuid
+
+        u = uuid()
+        print_model.apply_async((model_pk), {}, task_id=u)
+
 ## Run test suite
 
 ```sh
