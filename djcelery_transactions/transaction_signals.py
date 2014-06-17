@@ -47,7 +47,7 @@ class TransactionSignals(object):
 transaction.signals = TransactionSignals()
 __original__exit__ = transaction.Atomic.__exit__
 
-def __patched__exit__(self, exc_type, exc_value, trackback):
+def __patched__exit__(self, exc_type, exc_value, traceback):
     connection = get_connection(self.using)
 
     if connection.savepoint_ids:
@@ -57,7 +57,12 @@ def __patched__exit__(self, exc_type, exc_value, trackback):
         connection.in_atomic_block = False
 
     try:
-        if exc_type is None and not connection.needs_rollback:
+        if connection.closed_in_transaction:
+            # The database will perform a rollback by itself.
+            # Wait until we exit the outermost block.
+            pass
+
+        elif exc_type is None and not connection.needs_rollback:
             if connection.in_atomic_block:
                 # Release savepoint if there is one
                 if sid is not None:
@@ -65,8 +70,14 @@ def __patched__exit__(self, exc_type, exc_value, trackback):
                         connection.savepoint_commit(sid)
                         transaction.signals.post_commit.send(None)
                     except DatabaseError:
-                        connection.savepoint_rollback(sid)
-                        transaction.signals.post_rollback.send(None)
+                        try:
+                            connection.savepoint_rollback(sid)
+                            transaction.signals.post_rollback.send(None)
+                        except Error:
+                            # If rolling back to a savepoint fails, mark for
+                            # rollback at a higher level and avoid shadowing
+                            # the original exception.
+                            connection.needs_rollback = True
                         raise
             else:
                 # Commit transaction
@@ -74,8 +85,13 @@ def __patched__exit__(self, exc_type, exc_value, trackback):
                     connection.commit()
                     transaction.signals.post_commit.send(None)
                 except DatabaseError:
-                    connection.rollback()
-                    transaction.signals.post_rollback.send(None)
+                    try:
+                        connection.rollback()
+                        transaction.signals.post_rollback.send(None)
+                    except Error:
+                        # An error during rollback means that something
+                        # went wrong with the connection. Drop it.
+                        connection.close()
                     raise
         else:
             # This flag will be set to True again if there isn't a savepoint
@@ -87,23 +103,39 @@ def __patched__exit__(self, exc_type, exc_value, trackback):
                 if sid is None:
                     connection.needs_rollback = True
                 else:
-                    connection.savepoint_rollback(sid)
-                    transaction.signals.post_rollback.send(None)
+                    try:
+                        connection.savepoint_rollback(sid)
+                        transaction.signals.post_rollback.send(None)
+                    except Error:
+                        # If rolling back to a savepoint fails, mark for
+                        # rollback at a higher level and avoid shadowing
+                        # the original exception.
+                        connection.needs_rollback = True
             else:
                 # Roll back transaction
-                connection.rollback()
-                transaction.signals.post_rollback.send(None)
+                try:
+                    connection.rollback()
+                    transaction.signals.post_rollback.send(None)
+                except Error:
+                    # An error during rollback means that something
+                    # went wrong with the connection. Drop it.
+                    connection.close()
 
     finally:
         # Outermost block exit when autocommit was enabled.
         if not connection.in_atomic_block:
-            if connection.features.autocommits_when_autocommit_is_off:
+            if connection.closed_in_transaction:
+                connection.connection = None
+            elif connection.features.autocommits_when_autocommit_is_off:
                 connection.autocommit = True
             else:
                 connection.set_autocommit(True)
-            # Outermost block exit when autocommit was disabled.
+        # Outermost block exit when autocommit was disabled.
         elif not connection.savepoint_ids and not connection.commit_on_exit:
-            connection.in_atomic_block = False
+            if connection.closed_in_transaction:
+                connection.connection = None
+            else:
+                connection.in_atomic_block = False
 
 
 # Monkey patch that shit
