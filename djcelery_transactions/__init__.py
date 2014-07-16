@@ -1,12 +1,12 @@
 # coding=utf-8
-from celery.task import task as base_task, Task
-from celery import current_app
-import djcelery_transactions.transaction_signals
-from django.db import transaction
 from functools import partial
 import threading
 
+from celery import task as base_task, current_app, Task
+from django.db import transaction
 from django.db.transaction import get_connection
+
+import djcelery_transactions.transaction_signals
 
 # Thread-local data (task queue).
 _thread_data = threading.local()
@@ -41,22 +41,20 @@ class PostTransactionTask(Task):
 
     abstract = True
 
-    @classmethod
-    def original_apply_async(cls, *args, **kwargs):
+    def original_apply_async(self, *args, **kwargs):
         """Shortcut method to reach real implementation
         of celery.Task.apply_sync
         """
-        return super(PostTransactionTask, cls).apply_async(*args, **kwargs)
+        return super(PostTransactionTask, self).apply_async(*args, **kwargs)
 
-    @classmethod
-    def apply_async(cls, *args, **kwargs):
+    def apply_async(self, *args, **kwargs):
         # Delay the task unless the client requested otherwise or transactions
         # aren't being managed (i.e. the signal handlers won't send the task).
         connection = get_connection()
         if connection.in_atomic_block and not getattr(current_app.conf, 'CELERY_ALWAYS_EAGER', False):
-            _get_task_queue().append((cls, args, kwargs))
+            _get_task_queue().append((self, args, kwargs))
         else:
-            return cls.original_apply_async(*args, **kwargs)
+            return self.original_apply_async(*args, **kwargs)
 
 
 def _discard_tasks(**kwargs):
@@ -74,8 +72,8 @@ def _send_tasks(**kwargs):
     """
     queue = _get_task_queue()
     while queue:
-        cls, args, kwargs = queue.pop(0)
-        cls.original_apply_async(*args, **kwargs)
+        tsk, args, kwargs = queue.pop(0)
+        tsk.original_apply_async(*args, **kwargs)
 
 
 # A replacement decorator.
