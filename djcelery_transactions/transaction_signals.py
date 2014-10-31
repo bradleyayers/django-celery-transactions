@@ -160,7 +160,7 @@ else:
                             try:
                                 connection.savepoint_rollback(sid)
                                 transaction.signals.post_rollback.send(None)
-                            except Error:
+                            except Exception:
                                 # If rolling back to a savepoint fails, mark for
                                 # rollback at a higher level and avoid shadowing
                                 # the original exception.
@@ -175,7 +175,7 @@ else:
                         try:
                             connection.rollback()
                             transaction.signals.post_rollback.send(None)
-                        except Error:
+                        except Exception:
                             # An error during rollback means that something
                             # went wrong with the connection. Drop it.
                             connection.close()
@@ -193,7 +193,7 @@ else:
                         try:
                             connection.savepoint_rollback(sid)
                             transaction.signals.post_rollback.send(None)
-                        except Error:
+                        except Exception:
                             # If rolling back to a savepoint fails, mark for
                             # rollback at a higher level and avoid shadowing
                             # the original exception.
@@ -203,7 +203,7 @@ else:
                     try:
                         connection.rollback()
                         transaction.signals.post_rollback.send(None)
-                    except Error:
+                    except Exception:
                         # An error during rollback means that something
                         # went wrong with the connection. Drop it.
                         connection.close()
