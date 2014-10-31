@@ -1,11 +1,17 @@
 # coding=utf-8
-from celery.task import task as base_task, Task
-import djcelery_transactions.transaction_signals
-from django.db import transaction
 from functools import partial
 import threading
 from celery import current_app
 
+from celery import task as base_task, current_app, Task
+from celery.contrib.batches import Batches
+import django
+from django.db import transaction
+
+if django.VERSION >= (1,6):
+    from django.db.transaction import get_connection
+
+import djcelery_transactions.transaction_signals
 
 # Thread-local data (task queue).
 _thread_data = threading.local()
@@ -39,30 +45,61 @@ class PostTransactionTask(Task):
 
     abstract = True
 
-    @classmethod
-    def original_apply_async(cls, *args, **kwargs):
+    def original_apply_async(self, *args, **kwargs):
         """Shortcut method to reach real implementation
         of celery.Task.apply_sync
         """
-        return super(PostTransactionTask, cls).apply_async(*args, **kwargs)
+        return super(PostTransactionTask, self).apply_async(*args, **kwargs)
 
-    @classmethod
-    def apply_async(cls, *args, **kwargs):
+    def apply_async(self, *args, **kwargs):
+        # Delay the task unless the client requested otherwise or transactions
+        # aren't being managed (i.e. the signal handlers won't send the task).
+        connection = get_connection()
+        if connection.in_atomic_block:
+            _get_task_queue().append((self, args, kwargs))
+        else:
+            return self.original_apply_async(*args, **kwargs)
+
+
+class PostTransactionBatches(Batches):
+    """A batch of tasks whose queuing is delayed until after the current
+        transaction.
+    """
+
+    abstract = True
+
+    def original_apply_async(self, *args, **kwargs):
+        """Shortcut method to reach real implementation
+        of celery.Task.apply_sync
+        """
+        return super(PostTransactionBatches, self).apply_async(*args, **kwargs)
+
+    def apply_async(self, *args, **kwargs):
         # Delay the task unless the client requested otherwise or transactions
         # aren't being managed (i.e. the signal handlers won't send the task).
 
-        if transaction.is_managed() and not current_app.conf.CELERY_ALWAYS_EAGER:
-            if not transaction.is_dirty():
-                # Always mark the transaction as dirty
-                # because we push task in queue that must be fired or discarded
-                if 'using' in kwargs:
-                    transaction.set_dirty(using=kwargs['using'])
-                else:
-                    transaction.set_dirty()
-            _get_task_queue().append((cls, args, kwargs))
+        if django.VERSION < (1, 6):
+
+            if transaction.is_managed() and not current_app.conf.CELERY_ALWAYS_EAGER:
+                if not transaction.is_dirty():
+                    # Always mark the transaction as dirty
+                    # because we push task in queue that must be fired or discarded
+                    if 'using' in kwargs:
+                        transaction.set_dirty(using=kwargs['using'])
+                    else:
+                        transaction.set_dirty()
+                _get_task_queue().append((self, args, kwargs))
+            else:
+                apply_async_orig = super(PostTransactionTask, self).apply_async
+                return apply_async_orig(*args, **kwargs)
+
         else:
-            apply_async_orig = super(PostTransactionTask, cls).apply_async
-            return apply_async_orig(*args, **kwargs)
+
+            connection = get_connection()
+            if connection.in_atomic_block and not getattr(current_app.conf, 'CELERY_ALWAYS_EAGER', False):
+                _get_task_queue().append((self, args, kwargs))
+            else:
+                return self.original_apply_async(*args, **kwargs)
 
 
 def _discard_tasks(**kwargs):
@@ -80,11 +117,14 @@ def _send_tasks(**kwargs):
     """
     queue = _get_task_queue()
     while queue:
-        cls, args, kwargs = queue.pop(0)
-        apply_async_orig = cls.original_apply_async
-        if current_app.conf.CELERY_ALWAYS_EAGER:
-            apply_async_orig = transaction.autocommit()(apply_async_orig)
-        apply_async_orig(*args, **kwargs)
+        tsk, args, kwargs = queue.pop(0)
+        if django.VERSION < (1, 6):
+            apply_async_orig = tsk.original_apply_async
+            if current_app.conf.CELERY_ALWAYS_EAGER:
+                apply_async_orig = transaction.autocommit()(apply_async_orig)
+            apply_async_orig(*args, **kwargs)
+        else:
+            tsk.original_apply_async(*args, **kwargs)
 
 
 # A replacement decorator.
@@ -93,4 +133,3 @@ task = partial(base_task, base=PostTransactionTask)
 # Hook the signal handlers up.
 transaction.signals.post_commit.connect(_send_tasks)
 transaction.signals.post_rollback.connect(_discard_tasks)
-transaction.signals.post_transaction_management.connect(_send_tasks)

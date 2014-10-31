@@ -19,6 +19,12 @@ class RunTests(Command):
                                                     'DJANGO_SETTINGS_MODULE',
                                                     settings_module_name)
         prev_argv = sys.argv[:]
+
+        this_dir = os.getcwd()
+        testproj_dir = os.path.join(this_dir, 'tests')
+        os.chdir(testproj_dir)
+        sys.path.append(testproj_dir)
+
         try:
             sys.argv = [__file__, 'test'] + self.extra_args
             execute_from_command_line(argv=sys.argv)

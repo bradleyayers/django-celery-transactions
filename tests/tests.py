@@ -1,6 +1,6 @@
 from djcelery_transactions import task
-from celery.registry import tasks
-from django.db import transaction
+
+from django.db.transaction import atomic
 from django.test import TransactionTestCase
 
 my_global = []
@@ -11,7 +11,12 @@ marker = object()
 def my_task():
     my_global.append(marker)
 
-tasks.register(my_task)
+try:
+    from celery.registry import tasks
+    tasks.register(my_task)
+except:
+    from celery import task as base_task, current_app, Task
+    current_app.registry.register(my_task)
 
 class SpecificException(Exception):
     pass
@@ -26,7 +31,7 @@ class DjangoCeleryTestCase(TransactionTestCase):
         """Check that task is consumed when no exception happens
         """
 
-        @transaction.commit_on_success
+        @atomic()
         def do_something():
             my_task.delay()
 
@@ -37,7 +42,7 @@ class DjangoCeleryTestCase(TransactionTestCase):
         """Check that task is not consumed when exception happens
         """
 
-        @transaction.commit_on_success
+        @atomic()
         def do_something():
             my_task.delay()
             raise SpecificException
