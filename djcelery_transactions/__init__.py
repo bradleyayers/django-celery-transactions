@@ -55,7 +55,7 @@ class PostTransactionTask(Task):
         # Delay the task unless the client requested otherwise or transactions
         # aren't being managed (i.e. the signal handlers won't send the task).
         connection = get_connection()
-        if connection.in_atomic_block:
+        if connection.in_atomic_block and not getattr(current_app.conf, 'CELERY_ALWAYS_EAGER', False):
             _get_task_queue().append((self, args, kwargs))
         else:
             return self.original_apply_async(*args, **kwargs)
