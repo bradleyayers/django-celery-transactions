@@ -1,7 +1,12 @@
+import django, os
 from djcelery_transactions import task
-
-from django.db.transaction import atomic
 from django.test import TransactionTestCase
+
+if django.VERSION > (1,6):
+    from django.db.transaction import atomic
+else:
+    from django.db import transaction
+    atomic = transaction.commit_on_success
 
 my_global = []
 
@@ -10,6 +15,7 @@ marker = object()
 @task
 def my_task():
     my_global.append(marker)
+
 
 try:
     from celery.registry import tasks
@@ -31,7 +37,7 @@ class DjangoCeleryTestCase(TransactionTestCase):
         """Check that task is consumed when no exception happens
         """
 
-        @atomic()
+        @atomic
         def do_something():
             my_task.delay()
 
@@ -42,7 +48,7 @@ class DjangoCeleryTestCase(TransactionTestCase):
         """Check that task is not consumed when exception happens
         """
 
-        @atomic()
+        @atomic
         def do_something():
             my_task.delay()
             raise SpecificException
@@ -52,3 +58,9 @@ class DjangoCeleryTestCase(TransactionTestCase):
             self.assertFalse(my_global)
         else:
             self.fail('Exception not raised')
+
+    def test_via_api(self):
+
+        r = self.client.get('/test_api/')
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(my_global[0] is marker)

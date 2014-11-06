@@ -8,8 +8,8 @@ from celery.contrib.batches import Batches
 import django
 from django.db import transaction
 
-if django.VERSION >= (1,6):
-    from django.db.transaction import get_connection
+if django.VERSION >= (1, 6):
+    from django.db.transaction import get_connection, atomic
 
 import djcelery_transactions.transaction_signals
 
@@ -54,11 +54,30 @@ class PostTransactionTask(Task):
     def apply_async(self, *args, **kwargs):
         # Delay the task unless the client requested otherwise or transactions
         # aren't being managed (i.e. the signal handlers won't send the task).
-        connection = get_connection()
-        if connection.in_atomic_block:
-            _get_task_queue().append((self, args, kwargs))
+
+
+        if django.VERSION < (1, 6):
+
+            if transaction.is_managed():
+                if not transaction.is_dirty():
+                    # Always mark the transaction as dirty
+                    # because we push task in queue that must be fired or discarded
+                    if 'using' in kwargs:
+                        transaction.set_dirty(using=kwargs['using'])
+                    else:
+                        transaction.set_dirty()
+                _get_task_queue().append((self, args, kwargs))
+            else:
+                apply_async_orig = super(PostTransactionTask, self).apply_async
+                return apply_async_orig(*args, **kwargs)
+
         else:
-            return self.original_apply_async(*args, **kwargs)
+
+            connection = get_connection()
+            if connection.in_atomic_block:
+                _get_task_queue().append((self, args, kwargs))
+            else:
+                return self.original_apply_async(*args, **kwargs)
 
 
 class PostTransactionBatches(Batches):
@@ -80,7 +99,7 @@ class PostTransactionBatches(Batches):
 
         if django.VERSION < (1, 6):
 
-            if transaction.is_managed() and not current_app.conf.CELERY_ALWAYS_EAGER:
+            if transaction.is_managed():
                 if not transaction.is_dirty():
                     # Always mark the transaction as dirty
                     # because we push task in queue that must be fired or discarded
@@ -96,7 +115,7 @@ class PostTransactionBatches(Batches):
         else:
 
             connection = get_connection()
-            if connection.in_atomic_block and not getattr(current_app.conf, 'CELERY_ALWAYS_EAGER', False):
+            if connection.in_atomic_block:
                 _get_task_queue().append((self, args, kwargs))
             else:
                 return self.original_apply_async(*args, **kwargs)

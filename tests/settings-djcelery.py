@@ -4,19 +4,13 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': __name__,
+        'ATOMIC': True
     }
 }
 
 BROKER_BACKEND = 'memory'
 
 ROOT_URLCONF = 'tests.urls'
-
-from celery import current_app
-CELERY_ALWAYS_EAGER = True
-CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
-current_app.conf.CELERY_ALWAYS_EAGER = True
-current_app.conf.CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
-
 
 INSTALLED_APPS = ('djcelery_transactions',
                   'test'
@@ -28,4 +22,4 @@ LANGUAGE_CODE = 'en-us'
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 STATICFILES_DIRS = ()
 
-TEST_RUNNER = 'django.test.simple.DjangoTestSuiteRunner'
+TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
