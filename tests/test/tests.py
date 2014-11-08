@@ -5,7 +5,7 @@ if django.VERSION < (1,7):
     from django.core.cache import cache
 else:
     from django.core.cache import caches
-    cache = caches['tests']
+    cache = caches['default']
 
 if django.VERSION > (1,6):
     from django.db.transaction import atomic
