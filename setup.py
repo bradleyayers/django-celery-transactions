@@ -39,12 +39,12 @@ class RunTests(Command):
 
 setup(
     name="django-celery-transactions",
-    version="0.1.4",
+    version="0.2.0",
     description="Django transaction support for Celery tasks.",
-    long_description="See https://github.com/chrisdoble/django-celery-transactions",
-    author="Chris Doble",
-    author_email="chris@chrisdoble.com",
-    url="https://github.com/chrisdoble/django-celery-transactions",
+    long_description="See https://github.com/fellowshipofone/django-celery-transactions",
+    author="Nicolas Grasset",
+    author_email="nicolas.grasset@gmail.com",
+    url="https://github.com/fellowshipofone/django-celery-transactions",
     license="Simplified BSD",
     packages=["djcelery_transactions"],
     install_requires=[
