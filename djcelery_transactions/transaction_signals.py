@@ -155,7 +155,7 @@ else:
                     if sid is not None:
                         try:
                             connection.savepoint_commit(sid)
-                            transaction.signals.post_commit.send(None)
+                            #transaction.signals.post_commit.send(None)
                         except DatabaseError:
                             try:
                                 connection.savepoint_rollback(sid)

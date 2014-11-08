@@ -16,6 +16,8 @@ import djcelery_transactions.transaction_signals
 # Thread-local data (task queue).
 _thread_data = threading.local()
 
+CELERY_EAGER = getattr(current_app.conf, 'CELERY_ALWAYS_EAGER', False)
+
 
 def _get_task_queue():
     """Returns the calling thread's task queue."""
@@ -55,10 +57,9 @@ class PostTransactionTask(Task):
         # Delay the task unless the client requested otherwise or transactions
         # aren't being managed (i.e. the signal handlers won't send the task).
 
-
         if django.VERSION < (1, 6):
 
-            if transaction.is_managed():
+            if transaction.is_managed() and not CELERY_EAGER:
                 if not transaction.is_dirty():
                     # Always mark the transaction as dirty
                     # because we push task in queue that must be fired or discarded
@@ -74,7 +75,7 @@ class PostTransactionTask(Task):
         else:
 
             connection = get_connection()
-            if connection.in_atomic_block:
+            if connection.in_atomic_block and not CELERY_EAGER:
                 _get_task_queue().append((self, args, kwargs))
             else:
                 return self.original_apply_async(*args, **kwargs)
@@ -99,7 +100,7 @@ class PostTransactionBatches(Batches):
 
         if django.VERSION < (1, 6):
 
-            if transaction.is_managed():
+            if transaction.is_managed() and not CELERY_EAGER:
                 if not transaction.is_dirty():
                     # Always mark the transaction as dirty
                     # because we push task in queue that must be fired or discarded
@@ -115,7 +116,7 @@ class PostTransactionBatches(Batches):
         else:
 
             connection = get_connection()
-            if connection.in_atomic_block:
+            if connection.in_atomic_block and not CELERY_EAGER:
                 _get_task_queue().append((self, args, kwargs))
             else:
                 return self.original_apply_async(*args, **kwargs)
