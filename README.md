@@ -1,5 +1,10 @@
 # django-celery-transactions
 
+
+[![Travis](https://img.shields.io/travis/fellowshipofone/django-celery-transactions.svg?style=flat)][2]
+[![Version](https://img.shields.io/pypi/v/django-celery-transactions.svg?style=flat)][3]
+[![Downloads](https://img.shields.io/pypi/dm/django-celery-transactions.svg?style=flat)][4]
+
 django-celery-transactions holds on to Celery tasks until the current database
 transaction is committed, avoiding potential race conditions as described in
 Celery's [user guide][1]. Send tasks from signal handlers without fear!
@@ -61,3 +66,6 @@ Celery's [user guide][1]. Send tasks from signal handlers without fear!
         $ python setup.py test
 
 [1]: http://celery.readthedocs.org/en/latest/userguide/tasks.html#database-transactions
+[2]: https://travis-ci.org/fellowshipofone/django-celery-transactions
+[3]: https://pypi.python.org/pypi/django-celery-transactions
+[4]: https://pypi.python.org/pypi/django-celery-transactions
