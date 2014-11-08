@@ -3,8 +3,7 @@ __doc__ = """Minimal django settings to run manage.py test command"""
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': __name__,
-        'ATOMIC': True
+        'NAME': __name__
     }
 }
 
