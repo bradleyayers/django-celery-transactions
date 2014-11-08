@@ -1,3 +1,5 @@
+import django
+
 __doc__ = """Minimal django settings to run manage.py test command"""
 
 DATABASES = {
@@ -28,4 +30,7 @@ LANGUAGE_CODE = 'en-us'
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 STATICFILES_DIRS = ()
 
-TEST_RUNNER = 'django.test.simple.DjangoTestSuiteRunner'
+if django.VERSION < (1,6):
+    TEST_RUNNER = 'django.test.simple.DjangoTestSuiteRunner'
+else:
+    TEST_RUNNER = 'django.test.runner.DiscoverRunner'
