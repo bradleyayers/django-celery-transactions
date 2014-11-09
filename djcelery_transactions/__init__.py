@@ -133,7 +133,6 @@ class PostTransactionBatches(Batches):
             else:
                 return self.original_apply_async(*args, **kwargs)
 
-
 def _discard_tasks(**kwargs):
     """Discards all delayed Celery tasks.
 
