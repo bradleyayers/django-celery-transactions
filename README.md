@@ -81,7 +81,7 @@ the task later on, the `task_id` can be predefined in the `apply_async` method:
         u = uuid()
         print_model.apply_async((model_pk), {}, task_id=u)
         
-## CELERY_EAGER_TRANSACTION: Compatibility with CELERY_ALWAYS_EAGER
+## Compatibility with CELERY_ALWAYS_EAGER
 
 There are 2 main reasons for `CELERY_ALWAYS_EAGER`:
 
