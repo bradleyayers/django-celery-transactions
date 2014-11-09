@@ -80,7 +80,7 @@ class PostTransactionTask(Task):
         else:
 
             connection = get_connection()
-            if connection.in_atomic_block and not celery_eager:
+            if connection.in_atomic_block and eager_transaction:
                 _get_task_queue().append((self, args, kwargs))
             else:
                 return self.original_apply_async(*args, **kwargs)
@@ -128,7 +128,7 @@ class PostTransactionBatches(Batches):
         else:
 
             connection = get_connection()
-            if connection.in_atomic_block and not eager_transaction:
+            if connection.in_atomic_block and eager_transaction:
                 _get_task_queue().append((self, args, kwargs))
             else:
                 return self.original_apply_async(*args, **kwargs)
