@@ -50,7 +50,6 @@ setup(
     install_requires=[
         "celery>=2.2.7",
         "Django>=1.2.4",
-        "django-celery>=2.2.7",
     ],
     classifiers=[
         "Framework :: Django",
