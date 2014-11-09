@@ -60,6 +60,24 @@ Celery's [user guide][1]. Send tasks from signal handlers without fear!
         def manual_view(request, model_pk):
             print_model.delay(model_pk)
             transaction.commit()
+            
+## CELERY_EAGER_TRANSACTION: Compatibility with CELERY_ALWAYS_EAGER
+
+There are 2 main reasons for `CELERY_ALWAYS_EAGER`:
+
+   1. Running task synchronously and returning `EagerResult`, Celery's 
+   [user guide][1]
+   
+   2. Being able to run code (often tests) without a celery broker.
+   
+For this second reason, the intended behavior will often conflict with 
+transactions handling, which is why you should then also use 
+`CELERY_EAGER_TRANSACTION`
+
+        CELERY_ALWAYS_EAGER = True
+        CELERY_EAGER_TRANSACTION = True
+
+
 
 ## Run test suite
 

@@ -11,6 +11,8 @@ BROKER_BACKEND = 'memory'
 
 ROOT_URLCONF = 'tests.urls'
 
+CELERY_EAGER_TRANSACTION = True
+
 INSTALLED_APPS = ('djcelery_transactions',
                   'test'
                   )
