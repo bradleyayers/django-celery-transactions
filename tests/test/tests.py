@@ -7,7 +7,7 @@ else:
     from django.core.cache import caches
     cache = caches['default']
 
-if django.VERSION > (1,6):
+if django.VERSION >= (1,6):
     from django.db.transaction import atomic
 else:
     from django.db import transaction
@@ -65,3 +65,22 @@ class DjangoCeleryTestCase(TransactionTestCase):
         r = self.client.get('/test_api/')
         self.assertEqual(r.status_code, 200)
         self.assertEqual(cache.get('my_global'), 42)
+
+
+    def test_django_db_transaction_managed(self):
+        """
+        Check that django.db.transaction.managed is not affected
+        by monkey-patching
+        """
+
+        if django.VERSION >= (1,6):
+            self.skipTest('Django 1.6 does not need this test')
+
+        from django.db import transaction
+        self.assertFalse(transaction.is_managed())
+        transaction.enter_transaction_management()
+        try:
+            transaction.managed()
+            self.assertTrue(transaction.is_managed())
+        finally:
+            transaction.leave_transaction_management()
