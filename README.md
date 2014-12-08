@@ -4,6 +4,7 @@
 [![Travis](https://img.shields.io/travis/fellowshipofone/django-celery-transactions.svg?style=flat)][2]
 [![Version](https://img.shields.io/pypi/v/django-celery-transactions.svg?style=flat)][3]
 [![Downloads](https://img.shields.io/pypi/dm/django-celery-transactions.svg?style=flat)][4]
+[![Coverage Status](https://coveralls.io/repos/fellowshipofone/django-celery-transactions/badge.png?branch=master)][5]
 
 django-celery-transactions holds on to Celery tasks until the current database
 transaction is committed, avoiding potential race conditions as described in
@@ -107,3 +108,4 @@ $ python setup.py test
 [2]: https://travis-ci.org/fellowshipofone/django-celery-transactions
 [3]: https://pypi.python.org/pypi/django-celery-transactions
 [4]: https://pypi.python.org/pypi/django-celery-transactions
+[5]: https://coveralls.io/r/fellowshipofone/django-celery-transactions?branch=master
