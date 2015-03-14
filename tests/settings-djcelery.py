@@ -13,6 +13,8 @@ ROOT_URLCONF = 'tests.urls'
 
 CELERY_EAGER_TRANSACTION = True
 
+MIDDLEWARE_CLASSES = ()
+
 INSTALLED_APPS = ('djcelery_transactions',
                   'test'
                   )

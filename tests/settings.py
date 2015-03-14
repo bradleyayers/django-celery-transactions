@@ -21,6 +21,8 @@ current_app.conf.CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 
 CELERY_EAGER_TRANSACTION = True
 
+MIDDLEWARE_CLASSES = ()
+
 INSTALLED_APPS = ('djcelery_transactions',
                   'test'
                   )
