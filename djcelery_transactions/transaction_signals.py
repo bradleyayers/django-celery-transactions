@@ -28,7 +28,6 @@ functionality, which can be found on GitHub: https://gist.github.com/247844
     This module must be imported before you attempt to use the signals.
 """
 from functools import partial
-import threading
 import django
 
 from django.db import connections, DEFAULT_DB_ALIAS, DatabaseError
@@ -40,12 +39,6 @@ if django.VERSION >= (1,6):
     from django.db.transaction import get_connection
 
 from django.db import transaction
-try:
-    # Prior versions of Django 1.3
-    from django.db.transaction import state
-except ImportError:
-    state = None
-
 
 class TransactionSignals(object):
     """A container for the transaction signals."""
@@ -89,14 +82,7 @@ if django.VERSION < (1,6):
         # Turning transaction management off causes the current transaction to be
         # committed if it's dirty. We must send the signal after the actual commit.
         flag = kwargs.get('flag', args[0] if args else None)
-        if state is not None:
-            using = kwargs.get('using', args[1] if len(args) > 1 else None)
-            # Do not commit too early for prior versions of Django 1.3
-            thread_ident = threading.get_ident()
-            top = state.get(thread_ident, {}).get(using, None)
-            commit = top and not flag and transaction.is_dirty()
-        else:
-            commit = not flag and transaction.is_dirty()
+        commit = not flag and transaction.is_dirty()
         old_function(*args, **kwargs)
 
         if commit:
