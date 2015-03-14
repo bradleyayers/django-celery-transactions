@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from tests import my_task
+from .tests import my_task
 import django
 
 if django.VERSION > (1,6):

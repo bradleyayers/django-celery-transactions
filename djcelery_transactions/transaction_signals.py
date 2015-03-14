@@ -28,7 +28,7 @@ functionality, which can be found on GitHub: https://gist.github.com/247844
     This module must be imported before you attempt to use the signals.
 """
 from functools import partial
-import thread
+import threading
 import django
 
 from django.db import connections, DEFAULT_DB_ALIAS, DatabaseError
@@ -92,7 +92,7 @@ if django.VERSION < (1,6):
         if state is not None:
             using = kwargs.get('using', args[1] if len(args) > 1 else None)
             # Do not commit too early for prior versions of Django 1.3
-            thread_ident = thread.get_ident()
+            thread_ident = threading.get_ident()
             top = state.get(thread_ident, {}).get(using, None)
             commit = top and not flag and transaction.is_dirty()
         else:
