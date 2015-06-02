@@ -1,5 +1,6 @@
 from django.conf.urls import patterns
+from tests.test import views
 
 urlpatterns = patterns('',
-    (r'^test_api', 'test.views.test_api')
+    (r'^test_api', views.test_api)
 )

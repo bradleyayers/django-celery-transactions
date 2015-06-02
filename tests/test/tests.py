@@ -1,6 +1,7 @@
 import django, os
 from djcelery_transactions import task
 from django.test import TransactionTestCase
+from models import Trees, Plants
 if django.VERSION < (1,7):
     from django.core.cache import cache
 else:
@@ -16,6 +17,10 @@ else:
 @task
 def my_task():
     cache.set('my_global', 42)
+
+@task
+def my_model_task():
+    Plants.objects.create(name='Oak')
 
 
 try:
@@ -84,3 +89,15 @@ class DjangoCeleryTestCase(TransactionTestCase):
             self.assertTrue(transaction.is_managed())
         finally:
             transaction.leave_transaction_management()
+
+
+    def test_multiple_models(self):
+        """Check that task is consumed when no exception happens
+        """
+
+        @atomic
+        def do_something():
+            my_model_task.delay()
+
+        do_something()
+        Trees.objects.create(name='Grey Oak', plant=Plants.objects.get(name='Oak'))
