@@ -1,0 +1,36 @@
+language: python
+
+python:
+  - "2.7"
+  - "3.3"
+  - "3.4"
+
+services: mysql
+
+env:
+  - DJANGO="django==1.8.2"
+  - DJANGO="django==1.7.8"
+  - DJANGO="django==1.6.10"
+
+install:
+  - pip install $DJANGO
+  - pip install celery==3.1.18
+  - pip install django-celery==3.1.16
+  - pip install coveralls
+
+before_script:
+  - mysql -e 'create database testdb;'
+
+script:
+  - coverage run --source=djcelery_transactions runtests.py
+  - coverage run --source=djcelery_transactions runtests-djcelery.py
+
+after_success:
+  coveralls
+
+notifications:
+  email:
+    recipients:
+      - nicolas.grasset@gmail.com
+    on_success: change
+    on_failure: change

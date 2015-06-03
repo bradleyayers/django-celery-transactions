@@ -1,0 +1,267 @@
+Changelog
+=========
+
+0.3.2 (unreleased)
+------------------------
+
+- Pkg: Drop test support for Django 1.5. [Nicolas Grasset]
+
+- Trigger tasks in inner savepoint commits. [Nicolas Grasset]
+
+  This is a rollback of
+  https://github.com/fellowshipofone/django-celery-transactions/commit/c3d
+  2b704101ed90b0d6eebec0f0b8acc9ff1b617 by @sheats but I think it is
+  cleaner this way, and it is required for new Django 1.8 tests since
+  they are nested in atomic blocks
+
+
+- Django 1.8 extra not compatible with TransactionTestCase. [Nicolas
+  Grasset]
+
+- Make Django 1.8 code update compatible with 1.5. [Nicolas Grasset]
+
+- Pkg: Update from Django 1.8 source. [Nicolas Grasset]
+
+- Pkg: Cleanup test structure for extra 1.8 test. [Nicolas Grasset]
+
+- [tests] Check Django 1.8 logic. [Nicolas Grasset]
+
+0.3.1 (2015-04-18)
+------------------
+
+Changes
+~~~~~~~
+
+- Removed support for Django <= 1.3. [Nicolas Grasset]
+
+Other
+~~~~~
+
+- 0.3.1 PyPi upload issues. Fixes #9. [Nicolas Grasset]
+
+- Pkg: Fix PyPi file. [Nicolas Grasset]
+
+0.3.0 (2015-03-14)
+------------------
+
+- [travis] Target specific Django releases. [Nicolas Grasset]
+
+- 0.3.0 Release for Python 3. Fixes #8. [Nicolas Grasset]
+
+- [travis-ci] Test newest minor releases of Django. [Nicolas Grasset]
+
+- [travis-ci] Test Python 3.3 and 3.4. [Nicolas Grasset]
+
+- [python 3] Fixed issues on Python 3. [Nicolas Grasset]
+
+- [settings] Add MIDDLEWARE_CLASSES for Django 1.7 default. [Nicolas
+  Grasset]
+
+- Added coveralls support. [Nicolas Grasset]
+
+- Update Travis environment matrix for Django 1.7.1. [Nicolas Grasset]
+
+0.2.0 (2014-11-09)
+------------------
+
+- Merge pull request #5 from fellowshipofone/unify-releases. [Nicolas
+  Grasset]
+
+  Unify releases
+
+- Small readability change for README. [Nicolas Grasset]
+
+- Update AUTHORS after merge. [Nicolas Grasset]
+
+- Merge branch 'brycedrennan-master' into unify-releases. [Nicolas
+  Grasset]
+
+- Merge branch 'master' of github.com:brycedrennan/django-celery-
+  transactions into brycedrennan-master. [Nicolas Grasset]
+
+  Conflicts:
+  	README.md
+  	djcelery_transactions/__init__.py
+  	tests/tests.py
+
+
+- Merge remote-tracking branch 'fellowshipofone/master' [Bryce]
+
+  Conflicts:
+  	djcelery_transactions/__init__.py
+
+
+- Merge remote-tracking branch '10to8/master' [Bryce]
+
+  Conflicts:
+  	djcelery_transactions/__init__.py
+
+
+- Merge remote-tracking branch 'fladi/asyncresult-not-returned' [U
+  -CircleUp-Alpha\Bryce]
+
+- Heads up that task.delay() returns None, not AsyncResult. [Michael
+  Fladischer]
+
+- Merge remote-tracking branch 'fladi/celery-3.x' [U-CircleUp-
+  Alpha\Bryce]
+
+- Use celery.app package instead of deprecated celery.task. [Michael
+  Fladischer]
+
+- Merge remote-tracking branch 'ticosax/fix-regression' [U-CircleUp-
+  Alpha\Bryce]
+
+- Fix regression for django.db.transaction.managed. [Nicolas Delaby]
+
+- Add syntax highlighting. [Corey Farwell]
+
+- Fix eager_transaction. [Nicolas Grasset]
+
+- Update AUTHORS. [Nicolas Grasset]
+
+- New setting CELERY_EAGER_TRANSACTION. [Nicolas Grasset]
+
+- Merge branch 'clearcare-master' into unify-releases. [Nicolas Grasset]
+
+- Merge branch 'master' of github.com:clearcare/django-celery-
+  transactions into clearcare-master. [Nicolas Grasset]
+
+  Conflicts:
+  	djcelery_transactions/__init__.py
+
+
+- Looks like you only need djcelery to run tests, so install it if
+  you're going to run tests.  But I'd rather not have it installed if we
+  don't need it. [Peter Sheats]
+
+- Need to honor CELERY_ALWAYS_EAGER here too. [Peter Sheats]
+
+- We don't want tasks to get fired off during inner savepoint commits --
+  only when the parent transaction is committed. [Peter Sheats]
+
+- Update setup file for version 0.2.0. [Nicolas Grasset]
+
+- Update README file. [Nicolas Grasset]
+
+- Django 1.7, use default caches. [Nicolas Grasset]
+
+- Use django cache instead of  global variable to fix issue from Django
+  1.6. [Nicolas Grasset]
+
+- TestRunner, use DiscoverRunner from Django 1.6. [Nicolas Grasset]
+
+- Make both test settings more similar. [Nicolas Grasset]
+
+- Only test Django 2.7 for now. [Nicolas Grasset]
+
+- Update email, copied from django-redis earlier. [Nicolas Grasset]
+
+- Travis-ci. [Nicolas Grasset]
+
+- Fix broken tests. Works on Django < 1.6. [Nicolas Grasset]
+
+- Merge pull request #3 from fellowshipofone/django-1.6. [Nicolas
+  Grasset]
+
+  Django 1.6 support
+
+- Fixed the tests for 1.6, CELERY_EAGER now working differently.
+  [Nicolas Grasset]
+
+- Merge github.com:nlundquist/django-celery-transactions into
+  django-1.6. [Nicolas Grasset]
+
+  Conflicts:
+  	.gitignore
+  	djcelery_transactions/__init__.py
+  	djcelery_transactions/transaction_signals.py
+
+
+- Adding Batches subclass. [Nils Lundquist]
+
+- Celery 3.1 compatibility. [Jakub Paczkowski]
+
+- Bring django celery transactions to 1.6.5 version. [Nic Pottier]
+
+- Only queue tasks for later if we are in an atomic block. [Nic Pottier]
+
+- Modifications for django 1.6, serious overhaul. [Nic Pottier]
+
+- Deal with case when there are no args. [Nic Pottier]
+
+- Do not queue celeryt asks if always eager is on. [Nic Pottier]
+
+- Simpler CELERY_ALWAYS_EAGER support. [Nicolas Grasset]
+
+- Change CELERY_ALWAYS_EAGER fix. [Nicolas Grasset]
+
+- Ignore .idea files. [Nicolas Grasset]
+
+- Merge pull request #1 from 10to8/master. [Nicolas Grasset]
+
+  Fix for CELERY_ALWAYS_EAGER setting
+
+- Update __init__.py. [Tom Playford]
+
+- After_transaction support. [Tom Playford]
+
+- Fix for CELERY_ALWAYS_EAGER setting. [Tom Playford]
+
+- Merge pull request #5 from nicolas-DH/add-test-and-fix-bug. [Bradley
+  Ayers]
+
+  Add test and fix bug
+
+- Ignore build directory. [Nicolas Delaby]
+
+- Add minimal test suite to check any regression and prove bug fixing.
+  [Nicolas Delaby]
+
+- BUG Fix. [Nicolas Delaby]
+
+  If transactions is not mark as dirty in case of rollback, celery queue is still consumed
+
+
+- Get rid of extra argument after_transaction passed to apply_async.
+  [Nicolas Delaby]
+
+- Add support for prior versions of Django 1.3. [Nicolas Delaby]
+
+- Reorganise import for pep8 compliancy. [Nicolas Delaby]
+
+- Be function signature agnostic. [Nicolas Delaby]
+
+  Make sure we can follow any changes in transaction API
+
+
+- Assign and return in same time. [Nicolas Delaby]
+
+- Push task to broker in the same order they have appeared. [Nicolas
+  Delaby]
+
+- Alphabetise AUTHORS to standardise it for future contributors.
+  [Bradley Ayers]
+
+0.1.3 (2012-10-15)
+------------------
+
+- Reduce version requirements, bump to v0.1.3. [Chris Doble]
+
+- Merge pull request #2 from marcinn/master. [Chris Doble]
+
+  Python 2.5 compatibility.
+
+- Compatibility with python 2.5. [Marcin Nowak]
+
+- Improve README. [Chris Doble]
+
+- Fix task queue creation. [Chris Doble]
+
+- Use transaction signals instead of request signals. [Chris Doble]
+
+- Use signal handlers instead of middleware. [Chris Doble]
+
+- Initial commit. [Chris Doble]
+
+
