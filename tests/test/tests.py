@@ -1,7 +1,7 @@
 import django, os
 from djcelery_transactions import task
 from django.test import TransactionTestCase
-from models import Trees, Plants
+from .models import Trees, Plants
 if django.VERSION < (1,7):
     from django.core.cache import cache
 else:
