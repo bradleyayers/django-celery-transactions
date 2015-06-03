@@ -1,10 +1,33 @@
 Changelog
 =========
 
-0.3.1 (2015-04-17)
+0.3.2 (unreleased)
 ------------------------
 
-- Having issues with Pypi when uploading file, trying again with new version
+- Pkg: Drop test support for Django 1.5. [Nicolas Grasset]
+
+- Trigger tasks in inner savepoint commits. [Nicolas Grasset]
+
+  This is a rollback of
+  https://github.com/fellowshipofone/django-celery-transactions/commit/c3d
+  2b704101ed90b0d6eebec0f0b8acc9ff1b617 by @sheats but I think it is
+  cleaner this way, and it is required for new Django 1.8 tests since
+  they are nested in atomic blocks
+
+
+- Django 1.8 extra not compatible with TransactionTestCase. [Nicolas
+  Grasset]
+
+- Make Django 1.8 code update compatible with 1.5. [Nicolas Grasset]
+
+- Pkg: Update from Django 1.8 source. [Nicolas Grasset]
+
+- Pkg: Cleanup test structure for extra 1.8 test. [Nicolas Grasset]
+
+- [tests] Check Django 1.8 logic. [Nicolas Grasset]
+
+0.3.1 (2015-04-18)
+------------------
 
 Changes
 ~~~~~~~
@@ -13,6 +36,8 @@ Changes
 
 Other
 ~~~~~
+
+- 0.3.1 PyPi upload issues. Fixes #9. [Nicolas Grasset]
 
 - Pkg: Fix PyPi file. [Nicolas Grasset]
 
