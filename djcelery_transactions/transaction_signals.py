@@ -30,7 +30,9 @@ functionality, which can be found on GitHub: https://gist.github.com/247844
 from functools import partial
 import django
 
-from django.db import connections, DEFAULT_DB_ALIAS, DatabaseError
+from django.db import (
+    DEFAULT_DB_ALIAS, DatabaseError, Error, connections,
+)
 
 from django.dispatch import Signal
 
@@ -146,7 +148,11 @@ else:
                             try:
                                 connection.savepoint_rollback(sid)
                                 transaction.signals.post_rollback.send(None)
-                            except Exception:
+                                # The savepoint won't be reused. Release it to
+                                # minimize overhead for the database server.
+                                connection.savepoint_commit(sid)
+                                transaction.signals.post_commit.send(None)
+                            except Error:
                                 # If rolling back to a savepoint fails, mark for
                                 # rollback at a higher level and avoid shadowing
                                 # the original exception.
@@ -161,7 +167,7 @@ else:
                         try:
                             connection.rollback()
                             transaction.signals.post_rollback.send(None)
-                        except Exception:
+                        except Error:
                             # An error during rollback means that something
                             # went wrong with the connection. Drop it.
                             connection.close()
@@ -179,7 +185,11 @@ else:
                         try:
                             connection.savepoint_rollback(sid)
                             transaction.signals.post_rollback.send(None)
-                        except Exception:
+                            # The savepoint won't be reused. Release it to
+                            # minimize overhead for the database server.
+                            connection.savepoint_commit(sid)
+                            transaction.signals.post_commit.send(None)
+                        except Error:
                             # If rolling back to a savepoint fails, mark for
                             # rollback at a higher level and avoid shadowing
                             # the original exception.
@@ -189,7 +199,7 @@ else:
                     try:
                         connection.rollback()
                         transaction.signals.post_rollback.send(None)
-                    except Exception:
+                    except Error:
                         # An error during rollback means that something
                         # went wrong with the connection. Drop it.
                         connection.close()
