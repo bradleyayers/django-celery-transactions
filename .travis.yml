@@ -15,7 +15,7 @@ env:
 
 install:
   - pip install $DJANGO
-  - pip install celery==3.1.16
+  - pip install celery==3.1.18
   - pip install django-celery==3.1.16
   - pip install coveralls
 
