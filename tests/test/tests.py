@@ -95,6 +95,11 @@ class DjangoCeleryTestCase(TransactionTestCase):
         """Check that task is consumed when no exception happens
         """
 
+        from django.core.management import call_command
+        from django.db.models import loading
+        loading.cache.loaded = False
+        call_command('syncdb', verbosity=0)
+
         @atomic
         def do_something():
             my_model_task.delay()

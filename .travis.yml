@@ -8,7 +8,8 @@ python:
 services: mysql
 
 env:
-  - DJANGO="django==1.7.6"
+  - DJANGO="django==1.8.2"
+  - DJANGO="django==1.7.8"
   - DJANGO="django==1.6.10"
   - DJANGO="django==1.5.12"
 
@@ -20,7 +21,6 @@ install:
 
 before_script:
   - mysql -e 'create database testdb;'
-  - python manage.py migrate --noinput
 
 script:
   - coverage run --source=djcelery_transactions runtests.py

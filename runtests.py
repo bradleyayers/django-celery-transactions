@@ -25,23 +25,37 @@ def runtests():
                 'USER': 'root',
             })
 
+        if django.VERSION < (1,6):
+            TEST_RUNNER = 'django.test.simple.DjangoTestSuiteRunner'
+        else:
+            TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+
         # Configure test environment
         settings.configure(
             DATABASES=DATABASES,
             INSTALLED_APPS=(
-                'tests',
+                'djcelery_transactions',
+                'tests.test',
             ),
-            ROOT_URLCONF=None,  # tests override urlconf, but it still needs to be defined
+            ROOT_URLCONF='tests.urls',
             LANGUAGES=(
                 ('en', 'English'),
             ),
             MIDDLEWARE_CLASSES=(),
+            CELERY_ALWAYS_EAGER = True,
+            CELERY_EAGER_PROPAGATES_EXCEPTIONS = True,
+            CELERY_EAGER_TRANSACTION = True,
+            TEST_RUNNER=TEST_RUNNER
         )
+
+        from celery import current_app
+        current_app.conf.CELERY_ALWAYS_EAGER = True
+        current_app.conf.CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 
     if django.VERSION >= (1, 7):
         django.setup()
     failures = call_command(
-        'test', 'tests', interactive=False, failfast=False, verbosity=2)
+        'test', 'tests', interactive=False, failfast=False, verbosity=1)
 
     sys.exit(bool(failures))
 
