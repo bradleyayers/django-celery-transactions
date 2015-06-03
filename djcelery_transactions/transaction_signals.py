@@ -31,14 +31,17 @@ from functools import partial
 import django
 
 from django.db import (
-    DEFAULT_DB_ALIAS, DatabaseError, Error, connections,
+    DEFAULT_DB_ALIAS, DatabaseError, connections,
 )
 
 from django.dispatch import Signal
 
 if django.VERSION >= (1,6):
-    from django.db import ProgrammingError
+    from django.db import ProgrammingError, Error
     from django.db.transaction import get_connection
+else:
+    class Error(Exception):
+        pass
 
 from django.db import transaction
 
