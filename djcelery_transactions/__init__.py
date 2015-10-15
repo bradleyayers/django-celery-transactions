@@ -4,6 +4,9 @@ import djcelery_transactions.transaction_signals
 from django.db import transaction
 from functools import partial
 import threading
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Thread-local data (task queue).
@@ -67,6 +70,9 @@ def _discard_tasks(**kwargs):
     """Discards all delayed Celery tasks.
 
     Called after a transaction is rolled back."""
+    num_tasks = len(_get_task_queue())
+    if num_tasks:
+        logger.warning('%d tasks discarded because of transaction rollback!', num_tasks)
     _get_task_queue()[:] = []
 
 
